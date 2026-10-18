@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="QuickNotes API Client - Connecting front-end interface with RESTful backend API services.">
+    <title>QuickNotes &bull; API Client</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Stylesheet -->
+    <link rel="stylesheet" href="style.css">
+    <!-- API Client Script loaded with defer -->
+    <script src="api.js" defer></script>
+</head>
+
+<body>
+    <!-- App Header -->
+    <header class="app-header">
+        <div class="header-inner">
+            <h1 class="app-title">QuickNotes</h1>
+            <p class="app-tagline">Cloud Note Management &bull; REST API Integration Client</p>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="main-container">
+        <!-- Form Section: Create Note -->
+        <section class="card form-card" aria-labelledby="form-heading">
+            <h2 id="form-heading" class="section-title">Create a Note</h2>
+            <form id="note-form" novalidate>
+                <div class="form-group">
+                    <label for="title-input" class="form-label">Note Title <span class="required">*</span></label>
+                    <input type="text" id="title-input" class="form-control" placeholder="Enter note title (max 100 characters)" maxlength="120" autocomplete="off">
+                </div>
+
+                <div class="form-group">
+                    <label for="body-input" class="form-label">Note Content <span class="optional">(Optional)</span></label>
+                    <textarea id="body-input" class="form-control textarea-control" rows="4" placeholder="Write your note body here..."></textarea>
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" id="submit-btn" class="btn btn-primary">Create Note</button>
+                </div>
+            </form>
+        </section>
+
+        <!-- Notes Section: List and Controls -->
+        <section class="card notes-card" aria-labelledby="notes-heading">
+            <div class="section-header">
+                <h2 id="notes-heading" class="section-title">Server Notes</h2>
+                <button type="button" id="load-btn" class="btn btn-secondary">Load notes</button>
+            </div>
+
+            <!-- Status Message Bar -->
+            <p id="status" class="status-message" role="status" aria-live="polite"></p>
+
+            <!-- Notes List -->
+            <ul id="notes-list" class="notes-list" aria-live="polite"></ul>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="app-footer">
+        <p>&copy; 2026 QuickNotes System Design &bull; Web Foundations Project 2</p>
+    </footer>
+</body>
+
+</html>
