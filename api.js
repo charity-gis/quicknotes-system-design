@@ -32,7 +32,12 @@ async function request(url, options = {}) {
         return null;
     }
 
-    return await response.json();
+    // Attach response status to the returned object if possible
+    const data = await response.json();
+    if (data && typeof data === "object" && !Array.isArray(data)) {
+        data._httpStatus = response.status;
+    }
+    return data;
 }
 
 /**
@@ -43,6 +48,46 @@ async function request(url, options = {}) {
 function showStatus(message, type = "info") {
     statusEl.textContent = message;
     statusEl.className = `status-message show ${type}`;
+}
+
+/**
+ * Creates a single DOM note item element safely using createElement and textContent.
+ * @param {object} note - Note object with id, title, and body
+ * @returns {HTMLLIElement} - The created list item element
+ */
+function createNoteElement(note) {
+    const li = document.createElement("li");
+    li.className = "note-item";
+    li.dataset.id = note.id;
+
+    // Header with Title
+    const headerDiv = document.createElement("div");
+    headerDiv.className = "note-header";
+
+    const titleH3 = document.createElement("h3");
+    titleH3.className = "note-title";
+    titleH3.textContent = note.title;
+    headerDiv.appendChild(titleH3);
+
+    // Body Text
+    const bodyP = document.createElement("p");
+    bodyP.className = "note-body";
+    bodyP.textContent = note.body || "(No content)";
+
+    // Footer with Note ID badge
+    const footerDiv = document.createElement("div");
+    footerDiv.className = "note-footer";
+
+    const idBadge = document.createElement("span");
+    idBadge.className = "note-id-badge";
+    idBadge.textContent = `ID: #${note.id}`;
+    footerDiv.appendChild(idBadge);
+
+    li.appendChild(headerDiv);
+    li.appendChild(bodyP);
+    li.appendChild(footerDiv);
+
+    return li;
 }
 
 /**
@@ -63,38 +108,7 @@ function renderNotes(notes) {
     }
 
     notes.forEach(note => {
-        const li = document.createElement("li");
-        li.className = "note-item";
-        li.dataset.id = note.id;
-
-        // Header with Title
-        const headerDiv = document.createElement("div");
-        headerDiv.className = "note-header";
-
-        const titleH3 = document.createElement("h3");
-        titleH3.className = "note-title";
-        titleH3.textContent = note.title;
-        headerDiv.appendChild(titleH3);
-
-        // Body Text
-        const bodyP = document.createElement("p");
-        bodyP.className = "note-body";
-        bodyP.textContent = note.body || "(No content)";
-
-        // Footer with Note ID badge
-        const footerDiv = document.createElement("div");
-        footerDiv.className = "note-footer";
-
-        const idBadge = document.createElement("span");
-        idBadge.className = "note-id-badge";
-        idBadge.textContent = `ID: #${note.id}`;
-        footerDiv.appendChild(idBadge);
-
-        li.appendChild(headerDiv);
-        li.appendChild(bodyP);
-        li.appendChild(footerDiv);
-
-        notesList.appendChild(li);
+        notesList.appendChild(createNoteElement(note));
     });
 }
 
@@ -128,8 +142,79 @@ async function loadNotes() {
     }
 }
 
+/**
+ * Task 2: Creates a new note on the server (POST).
+ * Validates title (required, max 100 characters), sends payload, disables button,
+ * prepends note to the top of the list, and clears the form.
+ */
+async function createNote(event) {
+    event.preventDefault();
+
+    const title = titleInput.value.trim();
+    const body = bodyInput.value.trim();
+
+    // Validation
+    if (!title) {
+        showStatus("Validation error: Title is required.", "error");
+        titleInput.focus();
+        return;
+    }
+
+    if (title.length > 100) {
+        showStatus(`Validation error: Title cannot exceed 100 characters (currently ${title.length}).`, "error");
+        titleInput.focus();
+        return;
+    }
+
+    try {
+        // Disable submit button during active request
+        submitBtn.disabled = true;
+        showStatus("Creating note...", "loading");
+
+        const payload = {
+            title: title,
+            body: body,
+            userId: 1,
+        };
+
+        const newNote = await request(API_URL, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json; charset=UTF-8",
+            },
+            body: JSON.stringify(payload),
+        });
+
+        // Remove empty state message if currently displayed
+        const emptyState = notesList.querySelector(".empty-state");
+        if (emptyState) {
+            emptyState.remove();
+        }
+
+        // Add newly created note to the top of the list
+        const noteElement = createNoteElement(newNote);
+        notesList.prepend(noteElement);
+
+        // Display success status with HTTP status code and new id
+        const statusReport = newNote._httpStatus ? newNote._httpStatus : 201;
+        showStatus(`Note created (status ${statusReport}, id ${newNote.id}).`, "success");
+
+        // Clear the form fields
+        titleInput.value = "";
+        bodyInput.value = "";
+        titleInput.focus();
+    } catch (error) {
+        console.error("Failed to create note:", error);
+        showStatus(`Failed to create note: ${error.message}. Please try again.`, "error");
+    } finally {
+        // Re-enable submit button
+        submitBtn.disabled = false;
+    }
+}
+
 // Event Listeners
 loadBtn.addEventListener("click", loadNotes);
+noteForm.addEventListener("submit", createNote);
 
 // Initial State: display empty state on page load
 renderNotes([]);
